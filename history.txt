@@ -1,0 +1,149 @@
+    1  ls -la
+    2  python --version
+    3  curl https://pyenv.run | bash
+    4  echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.zshrc
+    5  echo 'command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.zshrc
+    6  echo 'eval "$(pyenv init -)"' >> ~/.zshrc
+    7  cat ~/.zshrc
+    8  source ~/.zshrc
+    9  sudo apt-get install -y   make   build-essential   libssl-dev   zlib1g-dev   libbz2-dev   libreadline-dev   libsqlite3-dev   wget   curl   llvm   libncurses5-dev   libncursesw5-dev   xz-utils   tk-dev   liblzma-dev
+   10  pyenv install 3.8
+   11  pwd
+   12  python3 --version
+   13  pip install pyspark
+   14  apt install python3-pip
+   15  pip install pyspark
+   16  pwd
+   17  pip install pyspark
+   18  pyenv remove 3.8
+   19  pyenv --version
+   20  cat ~/.zshrc
+   21  pyenv
+   22  pyenv install 3.8
+   23  venv 
+   24  sudo apt-get install python3-venv
+   25  python3 -m venv data_test
+   26  source myenv/bin/activate
+   27  source data_test/bin/activate
+   28  pip --version
+   29  pip install pyspark
+   30  python test.py
+   31  ls
+   32  python data_test/test.py
+   33  java -version
+   34  java --version
+   35  clear
+   36  python data_test/test.py
+   37  java --version
+   38  clear
+   39  python data_test/test.py
+   40  spark-shell
+   41  python data_test/test.py
+   42  clear
+   43  python data_test/test.py
+   44  clear
+   45  python data_test/test.py
+   46  clear
+   47  python data_test/test.py
+   48  clear
+   49  python data_test/test.py
+   50  clear
+   51  python data_test/test.py
+   52  clear
+   53  python data_test/test.py
+   54  clear
+   55  python data_test/test.py
+   56  clear
+   57  python data_test/test.py
+   58  clear
+   59  python data_test/test.py
+   60  clear
+   61  python data_test/test.py
+   62  python data_test/test.py tocoto
+   63  python data_test/test.py 2025
+   64  clear
+   65  python data_test/test.py 2025
+   66  clear
+   67  python data_test/test.py 2025
+   68  code .
+   69  code .
+   70  pwd
+   71  ls -la
+   72  python -v
+   73  python3 --version
+   74  sudo apt-get remove python3.8
+   75  python3 --version
+   76  sudo apt-get remove python3
+   77  python3 --version
+   78  python --version
+   79  pyenv
+   80  sudo apt-get update
+   81  sudo apt-get install openjdk-17-jdk
+   82  ls -la
+   83  history | grep source
+   84  python test.py 2025
+   85  clear
+   86  python test.py 2025
+   87  clear
+   88  python test.py 2025
+   89  ython test.py 2025
+   90  x-absis-auto-profile
+   91  python read_json_csv_v2.py 2025
+   92  clear
+   93  python read_json_csv_v2.py 2025
+   94  clear
+   95  python read_json_csv_v2.py 2025
+   96  python test.py 2025
+   97  python pytest.py 
+   98  clear
+   99  python pytest.py 
+  100  clear
+  101  python pytest.py 
+  102  clear
+  103  python pytest.py 
+  104  clear
+  105  python pytest.py 
+  106  clear
+  107  python pytest.py 
+  108  python test.py 2025
+  109  clear
+  110  python test.py 2025
+  111  clear
+  112  python test.py 2025
+  113  clear
+  114  python test.py 2025
+  115  clear
+  116  python test.py 2025
+  117  clear
+  118  python test.py 2025
+  119  clear
+  120  python test.py 2025
+  121  clear
+  122  python test.py 2025
+  123  clear
+  124  python test.py 2025
+  125  clear
+  126  ython test.py 2025
+  127  clear
+  128  python spark_tutorial.py
+  129  python test.py 2025
+  130  clear
+  131  python test.py 2025
+  132  clear
+  133  python test.py 2025
+  134  clear
+  135  python test.py 2025
+  136  python test.py 2024
+  137  python test.py
+  138  clear
+  139  python test.py 2025
+  140  clear
+  141  python test.py 2025
+  142  /bin/python3 /root/.vscode-server/extensions/ms-python.python-2025.2.0-linux-x64/python_files/printEnvVariablesToFile.py /root/.vscode-server/extensions/ms-python.python-2025.2.0-linux-x64/python_files/deactivate/bash/envVars.txt
+  143  code .
+  144  python -v
+  145  clear
+  146  history 
+  147  pyenv install 3.8
+  148  pyenv
+  149  history >> history.txt
