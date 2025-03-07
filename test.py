@@ -92,34 +92,22 @@ for dataf in dataflows:
 
             df_list.append(csvdf)
 
-for df in df_list:
-    df.printSchema()
-    df.show(n=10)
+    for trans in dataf.transformations:
+        if "fields" in trans.config:
+            fields = trans.config["fields"]
+            print(f"{trans.type} has fields")
+
+        if "filter" in trans.config:
+            filter = trans.config["filter"]
+            print(f"{trans.type} has filter")
 
 
-# # Read transformations
-# transformations = jsondf.selectExpr("explode(dataflows) as dataflow") \
-#   .selectExpr("explode(dataflow.transformations) as transformation") \
-#   .collect()
+# for df in df_list:
+#     df.printSchema()
+#     df.show(n=10)
 
-# transformations_list = []
 
-# for transformation in transformations:
-#     # print(type(transformation))
-#     # print(transformation)
-#     trans = TransformationClass(transformation[0]["name"], transformation[0]["type"], transformation[0]["config"])
-    
-#     if trans.config.get("fields") is not None:
-#         fields = json.loads(trans.config.get("fields"))
-#         for item in fields:
-#             aux_dict = {item["name"], item["expression"]}
-#             trans.fields.append(aux_dict)
-        
-#     transformations_list.append(trans)
 
-# for obj in transformations_list:
-#     print()
-#     print(obj.name, obj.config, sep=' ')
-#     print(obj.name, obj.fields, sep=' ')
+
 
     
