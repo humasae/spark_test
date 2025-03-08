@@ -1,5 +1,5 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.types import StructType, StructField, StringType, ArrayType, MapType
+from pyspark.sql.functions import lit, current_date, expr
 import sys
 import json
 
@@ -89,24 +89,50 @@ for dataf in dataflows:
             for key,value in input.spark_options.items():
                 csvdf = csvdf.option(key, value)
             csvdf = csvdf.load(final_csv_path)
+            csvdf.withColumn("patata", lit('demography'))
 
             df_list.append(csvdf)
 
     for trans in dataf.transformations:
         if "fields" in trans.config:
             fields = trans.config["fields"]
-            print(f"{trans.type} has fields")
+            for field in fields:
+                for index,df in enumerate(df_list):
+                    if "'" in field["expression"]:
+                        df_list[index] = df.withColumn(field["name"], lit(field["expression"]))
+                    else:
+                        df_list[index] = df.withColumn(field["name"], expr(field["expression"]))
 
         if "filter" in trans.config:
             filter = trans.config["filter"]
-            print(f"{trans.type} has filter")
+            for field in fields:
+                for index,df in enumerate(df_list):
+                    df_list[index] = df.filter(filter)
+                    
 
 
-# for df in df_list:
-#     df.printSchema()
-#     df.show(n=10)
+for df in df_list:
+    df.printSchema()
+    df.show(n=10)
 
 
+# data = [('James','Smith','M',3000), ('Anna','Rose','F',4100),
+#   ('Robert','Williams','M',6200)
+# ]
+# columns = ["firstname","lastname","gender","salary"]
+# df = spark.createDataFrame(data=data, schema = columns)
+# df.show()
+
+# df.withColumn("bonus_percent", lit(0.3)) \
+#   .show()
+# # Add New column with NULL
+# df.withColumn("DEFAULT_COL", lit(None)) \
+#   .show()
+
+# df.withColumn("load_date", current_date()) \
+#   .show()
+
+# df.show()
 
 
 
