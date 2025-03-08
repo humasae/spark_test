@@ -9,25 +9,7 @@ spark = SparkSession.builder.appName("test").getOrCreate()
 base_path = "files"
 
 
-class InputClass:
-    name: str
-    type: str
-    config: dict[str, str]
-    spark_options: dict [str, str]
-
-    def __init__(self, name, type, config, spark_options):
-        self.name = name
-        self.type = type
-        self.config = config
-        self.spark_options = spark_options    
-
-    def get_path(self):
-        return(self.config.get("path"))
-
-    def get_format(self):
-        return(f"{self.config.get("format")}")
-    
-class TransformationClass:
+class JsonItemClass:
     type: str
     config: dict
 
@@ -35,16 +17,23 @@ class TransformationClass:
         self.type = type
         self.config = config
 
+class InputClass(JsonItemClass):
+    spark_options: dict [str, str]
+
+    def __init__(self, type, config, spark_options):
+        self.type = type
+        self.config = config
+        self.spark_options = spark_options  
+
 
 
 class DataflowClass:
-    inputs: list[InputClass]
-    transformations: list[TransformationClass]
+    inputs: list[JsonItemClass]
+    transformations: list[JsonItemClass]
+    outputs: list[JsonItemClass]
 
 
 # Read JSON with json library
-
-
 
 with open("metadata.json") as f:
     metadata_json = json.load(f)
@@ -58,16 +47,23 @@ for dataflow in metadata_json["dataflows"]:
     # Read inputs
     inputs = []
     for input in dataflow['inputs']:
-        obj_input = InputClass(input["name"], input["type"], input["config"], input["spark_options"])
+        obj_input = InputClass(input["type"], input["config"], input["spark_options"])
         inputs.append(obj_input)
     dataf.inputs = inputs
 
     # Read transformations
     transformations = []
     for transformation in dataflow["transformations"]:
-        obj_trans = TransformationClass(transformation["type"], transformation["config"])
+        obj_trans = JsonItemClass(transformation["type"], transformation["config"])
         transformations.append(obj_trans)
     dataf.transformations = transformations
+
+    #Read outputs
+    outputs = []
+    for output in dataflow["outputs"]:
+        obj_output = JsonItemClass(output["type"], output["config"])
+        outputs.append(obj_output)
+    dataf.outputs = outputs
     
     dataflows.append(dataf)
 
@@ -84,8 +80,8 @@ df_list = []
 for dataf in dataflows:
     for input in dataf.inputs:
         if input.type == "file":
-            final_csv_path = root_path + f"{(input.get_path()).replace('{{ year }}', year)}"
-            csvdf = spark.read.format(input.get_format())
+            final_csv_path = root_path + f"{(input.config.get("path")).replace('{{ year }}', year)}"
+            csvdf = spark.read.format(input.config.get("format"))
             for key,value in input.spark_options.items():
                 csvdf = csvdf.option(key, value)
             csvdf = csvdf.load(final_csv_path)
@@ -109,30 +105,13 @@ for dataf in dataflows:
                 for index,df in enumerate(df_list):
                     df_list[index] = df.filter(filter)
                     
-
+    for output in dataf.outputs:
+        print(output.config)
 
 for df in df_list:
     df.printSchema()
     df.show(n=10)
 
-
-# data = [('James','Smith','M',3000), ('Anna','Rose','F',4100),
-#   ('Robert','Williams','M',6200)
-# ]
-# columns = ["firstname","lastname","gender","salary"]
-# df = spark.createDataFrame(data=data, schema = columns)
-# df.show()
-
-# df.withColumn("bonus_percent", lit(0.3)) \
-#   .show()
-# # Add New column with NULL
-# df.withColumn("DEFAULT_COL", lit(None)) \
-#   .show()
-
-# df.withColumn("load_date", current_date()) \
-#   .show()
-
-# df.show()
 
 
 
