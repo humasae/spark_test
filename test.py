@@ -1,5 +1,6 @@
 import pyspark
 from delta import *
+from delta.tables import DeltaTable
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import lit, current_date, expr
 import sys
@@ -118,35 +119,42 @@ for dataf in dataflows:
                     
     for output in dataf.outputs:
         if(output.type == "file"):
-            print("to file")
-            # for df in df_list:
-            #     df = df.write.format(output.config["format"]) \
-            #     .mode(output.config["save_mode"])
-            #     if("partition") in output.config:
-            #         df = df.partitionBy(output.config["partition"])
-            #     df.save(f"./{output.config["path"]}")
+            for df in df_list:
+                df = df.write.format(output.config["format"]) \
+                .mode(output.config["save_mode"])
+                if("partition") in output.config:
+                    df = df.partitionBy(output.config["partition"])
+                df.save(f"./{output.config["path"]}")
 
         elif (output.type == "delta"):
-            print(output.config["table"])
-            print(output.config["save_mode"])
             if output.config["save_mode"] == "merge" and ("primary_key") in output.config:
-                print('-------------------output.config["primary_key"]')
-                print(output.config["primary_key"])
-                # delta_table.alias("existing_data") \
-                # .merge(new_records_df.alias("new_records"), "existing_data.<primary_key_column> = new_records.<primary_key_column>") \
-                # .whenNotMatchedInsertAll() \
-                # .execute()
+                
+                for df in df_list:
+                    if not DeltaTable.isDeltaTable(spark, "tmp/delta-table"):
+                        df.repartition(1).write.format("delta").save("tmp/delta-table")
+                    else:
+                        previous_table = DeltaTable.forPath(spark, "tmp/delta-table")
+                        
+                        merge_keys = ""
+                        for key in output.config["primary_key"]:
+                            if not len(merge_keys) == 0:
+                                merge_keys = merge_keys + " and "
+                            merge_keys = f"{merge_keys} target.{key} = source.{key}"
+
+
+                        previous_table.alias("target").merge(
+                            df.alias("source"), merge_keys
+                        ).execute
             else:
                 for df in df_list:
-                    print("hola")
                     df.write.format("delta")\
                     .mode(output.config["save_mode"])\
                     .saveAsTable(output.config["table"])
             
 
-# for df in df_list:
-#     df.printSchema()
-#     df.show(n=10)
+for df in df_list:
+    df.printSchema()
+    df.show(n=10)
 
 
 

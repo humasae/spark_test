@@ -176,3 +176,4 @@ share/
 pyvenv.cfg
 data/output/
 spark-warehouse/
+tmp/
