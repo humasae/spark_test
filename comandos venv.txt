@@ -24,3 +24,9 @@ builder = pyspark.sql.SparkSession.builder.appName("test") \
 spark = configure_spark_with_delta_pip(builder).getOrCreate()
 
 
+(delta lake merge)
+https://delta.io/blog/2023-02-14-delta-lake-merge/
+https://docs.delta.io/latest/delta-update.html
+https://docs.delta.io/0.4.0/api/python/index.html
+
+
