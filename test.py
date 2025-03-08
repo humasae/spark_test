@@ -1,26 +1,38 @@
+import pyspark
+from delta import *
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import lit, current_date, expr
 import sys
 import json
 
 
-spark = SparkSession.builder.appName("test").getOrCreate()
+
+#spark = SparkSession.builder.appName("test").getOrCreate()
+
+builder = pyspark.sql.SparkSession.builder.appName("test") \
+    .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \
+    .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
+
+spark = configure_spark_with_delta_pip(builder).getOrCreate()
 
 base_path = "files"
 
 
 class JsonItemClass:
+    name: str
     type: str
     config: dict
 
-    def __init__(self, type, config):
+    def __init__(self, name, type, config):
         self.type = type
         self.config = config
+        self.name = name
 
 class InputClass(JsonItemClass):
     spark_options: dict [str, str]
 
-    def __init__(self, type, config, spark_options):
+    def __init__(self, name, type, config, spark_options):
+        self.name = name
         self.type = type
         self.config = config
         self.spark_options = spark_options  
@@ -47,21 +59,21 @@ for dataflow in metadata_json["dataflows"]:
     # Read inputs
     inputs = []
     for input in dataflow['inputs']:
-        obj_input = InputClass(input["type"], input["config"], input["spark_options"])
+        obj_input = InputClass(input["name"], input["type"], input["config"], input["spark_options"])
         inputs.append(obj_input)
     dataf.inputs = inputs
 
     # Read transformations
     transformations = []
     for transformation in dataflow["transformations"]:
-        obj_trans = JsonItemClass(transformation["type"], transformation["config"])
+        obj_trans = JsonItemClass(transformation["name"], transformation["type"], transformation["config"])
         transformations.append(obj_trans)
     dataf.transformations = transformations
 
     #Read outputs
     outputs = []
     for output in dataflow["outputs"]:
-        obj_output = JsonItemClass(output["type"], output["config"])
+        obj_output = JsonItemClass(output["name"], output["type"], output["config"])
         outputs.append(obj_output)
     dataf.outputs = outputs
     
@@ -106,16 +118,31 @@ for dataf in dataflows:
                     
     for output in dataf.outputs:
         if(output.type == "file"):
-            for df in df_list:
-                df = df.write.format(output.config["format"]) \
-                .mode(output.config["save_mode"])
-                if("partition") in output.config:
-                    df = df.partitionBy(output.config["partition"])
-                df.save(f"./{output.config["path"]}")
+            print("to file")
+            # for df in df_list:
+            #     df = df.write.format(output.config["format"]) \
+            #     .mode(output.config["save_mode"])
+            #     if("partition") in output.config:
+            #         df = df.partitionBy(output.config["partition"])
+            #     df.save(f"./{output.config["path"]}")
 
         elif (output.type == "delta"):
             print(output.config["table"])
             print(output.config["save_mode"])
+            if output.config["save_mode"] == "merge" and ("primary_key") in output.config:
+                print('-------------------output.config["primary_key"]')
+                print(output.config["primary_key"])
+                # delta_table.alias("existing_data") \
+                # .merge(new_records_df.alias("new_records"), "existing_data.<primary_key_column> = new_records.<primary_key_column>") \
+                # .whenNotMatchedInsertAll() \
+                # .execute()
+            else:
+                for df in df_list:
+                    print("hola")
+                    df.write.format("delta")\
+                    .mode(output.config["save_mode"])\
+                    .saveAsTable(output.config["table"])
+            
 
 # for df in df_list:
 #     df.printSchema()

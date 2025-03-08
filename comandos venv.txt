@@ -1,3 +1,26 @@
 sudo apt-get install python3-venv
 python3 -m venv .
 source ./bin/activate
+
+
+--DELTA LAKE---
+
+(https://docs.delta.io/latest/quick-start.html)
+(https://delta.io/blog/2023-02-14-delta-lake-merge/)
+
+pyspark --packages io.delta:delta-core_2.12:2.1.0 \
+  --conf "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension" \
+  --conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog"
+
+pip install delta-spark==3.3.0
+
+import pyspark
+from delta import *
+
+builder = pyspark.sql.SparkSession.builder.appName("test") \
+    .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \
+    .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
+
+spark = configure_spark_with_delta_pip(builder).getOrCreate()
+
+

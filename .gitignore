@@ -175,3 +175,4 @@ include/
 share/
 pyvenv.cfg
 data/output/
+spark-warehouse/
