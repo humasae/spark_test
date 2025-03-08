@@ -85,8 +85,7 @@ for dataf in dataflows:
             for key,value in input.spark_options.items():
                 csvdf = csvdf.option(key, value)
             csvdf = csvdf.load(final_csv_path)
-            csvdf.withColumn("patata", lit('demography'))
-
+            
             df_list.append(csvdf)
 
     for trans in dataf.transformations:
@@ -106,11 +105,21 @@ for dataf in dataflows:
                     df_list[index] = df.filter(filter)
                     
     for output in dataf.outputs:
-        print(output.config)
+        if(output.type == "file"):
+            for df in df_list:
+                df = df.write.format(output.config["format"]) \
+                .mode(output.config["save_mode"])
+                if("partition") in output.config:
+                    df = df.partitionBy(output.config["partition"])
+                df.save(f"./{output.config["path"]}")
 
-for df in df_list:
-    df.printSchema()
-    df.show(n=10)
+        elif (output.type == "delta"):
+            print(output.config["table"])
+            print(output.config["save_mode"])
+
+# for df in df_list:
+#     df.printSchema()
+#     df.show(n=10)
 
 
 
