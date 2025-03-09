@@ -179,3 +179,5 @@ spark-warehouse/
 raw_opendata_demo/
 tmp/
 testpython.py
+lib64
+lib64/
