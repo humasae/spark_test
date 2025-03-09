@@ -23,10 +23,12 @@ class JsonItemClass:
     name: str
     type: str
     config: dict
+    input: str
 
-    def __init__(self, name, type, config):
+    def __init__(self, name, type, input, config):
         self.type = type
         self.config = config
+        self.input = input
         self.name = name
 
 class InputClass(JsonItemClass):
@@ -41,7 +43,8 @@ class InputClass(JsonItemClass):
 
 
 class DataflowClass:
-    inputs: list[JsonItemClass]
+    name: str
+    inputs: list[InputClass]
     transformations: list[JsonItemClass]
     outputs: list[JsonItemClass]
 
@@ -57,9 +60,10 @@ dataflows = []
 
 for dataflow in metadata_json["dataflows"]:
     dataf = DataflowClass
+    dataf.name = dataflow["name"]
     # Read inputs
     inputs = []
-    for input in dataflow['inputs']:
+    for input in dataflow["inputs"]:
         obj_input = InputClass(input["name"], input["type"], input["config"], input["spark_options"])
         inputs.append(obj_input)
     dataf.inputs = inputs
@@ -67,14 +71,14 @@ for dataflow in metadata_json["dataflows"]:
     # Read transformations
     transformations = []
     for transformation in dataflow["transformations"]:
-        obj_trans = JsonItemClass(transformation["name"], transformation["type"], transformation["config"])
+        obj_trans = JsonItemClass(transformation["name"], transformation["type"], transformation["input"], transformation["config"])
         transformations.append(obj_trans)
     dataf.transformations = transformations
 
     #Read outputs
     outputs = []
     for output in dataflow["outputs"]:
-        obj_output = JsonItemClass(output["name"], output["type"], output["config"])
+        obj_output = JsonItemClass(output["name"], output["type"], output["input"], output["config"])
         outputs.append(obj_output)
     dataf.outputs = outputs
     
@@ -87,10 +91,10 @@ if len(sys.argv) > 1:
     year = sys.argv[1]
 else:
     year = "2025"
-df_list = []
 
 
 for dataf in dataflows:
+    df_dict = {}
     for input in dataf.inputs:
         if input.type == "file":
             final_csv_path = root_path + f"{(input.config.get("path")).replace('{{ year }}', year)}"
@@ -98,64 +102,65 @@ for dataf in dataflows:
             for key,value in input.spark_options.items():
                 csvdf = csvdf.option(key, value)
             csvdf = csvdf.load(final_csv_path)
-            
-            df_list.append(csvdf)
+
+            df_dict[input.name] = csvdf
 
     for trans in dataf.transformations:
         if "fields" in trans.config:
             fields = trans.config["fields"]
             for field in fields:
-                for index,df in enumerate(df_list):
-                    if "'" in field["expression"]:
-                        df_list[index] = df.withColumn(field["name"], lit(field["expression"]))
-                    else:
-                        df_list[index] = df.withColumn(field["name"], expr(field["expression"]))
+                if "'" in field["expression"]:
+                    df_new_fields = df_dict[trans.input].withColumn(field["name"], lit(field["expression"]))
+                else:
+                    df_new_fields = df_dict[trans.input].withColumn(field["name"], expr(field["expression"]))
+            df_dict[trans.name] = df_new_fields
 
         if "filter" in trans.config:
             filter = trans.config["filter"]
             for field in fields:
-                for index,df in enumerate(df_list):
-                    df_list[index] = df.filter(filter)
+                df_new_filter = df_dict[trans.input].filter(filter)
+            df_dict[trans.name] = df_new_filter
                     
     for output in dataf.outputs:
         if(output.type == "file"):
-            for df in df_list:
-                df = df.write.format(output.config["format"]) \
-                .mode(output.config["save_mode"])
-                if("partition") in output.config:
-                    df = df.partitionBy(output.config["partition"])
-                df.save(f"./{output.config["path"]}")
+            df = df_dict[output.input]
+            df = df.write.format(output.config["format"]) \
+            .mode(output.config["save_mode"])
+            if("partition") in output.config:
+                df = df.partitionBy(output.config["partition"])
+            df.save(f"./{output.config["path"]}")
 
         elif (output.type == "delta"):
             if output.config["save_mode"] == "merge" and ("primary_key") in output.config:
                 
-                for df in df_list:
-                    if not DeltaTable.isDeltaTable(spark, "tmp/delta-table"):
-                        df.repartition(1).write.format("delta").save("tmp/delta-table")
-                    else:
-                        previous_table = DeltaTable.forPath(spark, "tmp/delta-table")
-                        
-                        merge_keys = ""
-                        for key in output.config["primary_key"]:
-                            if not len(merge_keys) == 0:
-                                merge_keys = merge_keys + " and "
-                            merge_keys = f"{merge_keys} target.{key} = source.{key}"
+                df = df_dict[output.input]
+                if not DeltaTable.isDeltaTable(spark, "tmp/delta-table"):
+                    df.repartition(1).write.format("delta").save("tmp/delta-table")
+                else:
+                    previous_table = DeltaTable.forPath(spark, "tmp/delta-table")
+                    
+                    merge_keys = ""
+                    for key in output.config["primary_key"]:
+                        if not len(merge_keys) == 0:
+                            merge_keys = merge_keys + " and "
+                        merge_keys = f"{merge_keys} target.{key} = source.{key}"
 
 
-                        previous_table.alias("target").merge(
-                            df.alias("source"), merge_keys
-                        ).execute
+                    previous_table.alias("target").merge(
+                        df.alias("source"), merge_keys
+                    ).execute
             else:
-                for df in df_list:
-                    df.write.format("delta")\
-                    .mode(output.config["save_mode"])\
-                    .saveAsTable(output.config["table"])
-            
+                df = df_dict[output.input]
+                df.repartition(1).write.format("delta")\
+                .mode(output.config["save_mode"])\
+                .saveAsTable(f"default.{output.config["table"]}")
 
-for df in df_list:
-    df.printSchema()
-    df.show(n=10)
+    for df in df_dict:
+        df_dict[df].printSchema()
+        df_dict[df].show(n=10)
 
+# df = spark.read.format("delta").load("spark-warehouse/raw_opendata_demo")
+# df.show()
 
 
 
