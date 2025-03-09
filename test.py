@@ -153,14 +153,16 @@ for dataf in dataflows:
                 df = df_dict[output.input]
                 df.repartition(1).write.format("delta")\
                 .mode(output.config["save_mode"])\
-                .saveAsTable(f"default.{output.config["table"]}")
+                .save(f"{output.config["table"]}")
 
-    for df in df_dict:
-        df_dict[df].printSchema()
-        df_dict[df].show(n=10)
+                dfprev = spark.read.format("delta").load(f"{output.config["table"]}")
+                dfprev.show()
 
-# df = spark.read.format("delta").load("spark-warehouse/raw_opendata_demo")
-# df.show()
+    # for df in df_dict:
+    #     df_dict[df].printSchema()
+    #     df_dict[df].show(n=10)
+
+
 
 
 

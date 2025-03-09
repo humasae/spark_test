@@ -176,5 +176,6 @@ share/
 pyvenv.cfg
 data/output/
 spark-warehouse/
+raw_opendata_demo/
 tmp/
 testpython.py
