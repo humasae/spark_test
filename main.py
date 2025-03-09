@@ -4,11 +4,7 @@ from delta.tables import DeltaTable
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import lit, current_date, expr
 import sys
-import json
-
-
-
-#spark = SparkSession.builder.appName("test").getOrCreate()
+import json_utils
 
 builder = pyspark.sql.SparkSession.builder.appName("test") \
     .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \
@@ -18,72 +14,6 @@ spark = configure_spark_with_delta_pip(builder).getOrCreate()
 
 base_path = "files"
 
-
-class JsonItemClass:
-    name: str
-    type: str
-    config: dict
-    input: str
-
-    def __init__(self, name, type, input, config):
-        self.type = type
-        self.config = config
-        self.input = input
-        self.name = name
-
-class InputClass(JsonItemClass):
-    spark_options: dict [str, str]
-
-    def __init__(self, name, type, config, spark_options):
-        self.name = name
-        self.type = type
-        self.config = config
-        self.spark_options = spark_options  
-
-class DataflowClass:
-    name: str
-    inputs: list[InputClass]
-    transformations: list[JsonItemClass]
-    outputs: list[JsonItemClass]
-
-
-def get_json(json_path):
-    """
-    Read JSON with json library
-    """
-    with open(json_path) as f:
-        return json.load(f)
-    
-def get_dataflows_from_json(metadata_json):
-    dataflows = []
-    
-    for dataflow in metadata_json["dataflows"]:
-        dataf = DataflowClass
-        dataf.name = dataflow["name"]
-        # Read inputs
-        inputs = []
-        for input in dataflow["inputs"]:
-            obj_input = InputClass(input["name"], input["type"], input["config"], input["spark_options"])
-            inputs.append(obj_input)
-        dataf.inputs = inputs
-
-        # Read transformations
-        transformations = []
-        for transformation in dataflow["transformations"]:
-            obj_trans = JsonItemClass(transformation["name"], transformation["type"], transformation["input"], transformation["config"])
-            transformations.append(obj_trans)
-        dataf.transformations = transformations
-
-        #Read outputs
-        outputs = []
-        for output in dataflow["outputs"]:
-            obj_output = JsonItemClass(output["name"], output["type"], output["input"], output["config"])
-            outputs.append(obj_output)
-        dataf.outputs = outputs
-        
-        dataflows.append(dataf)
-    return dataflows
-    
 def process_dataflows(dataflows, year):
     for dataf in dataflows:
         df_dict = {}
@@ -152,8 +82,8 @@ def process_dataflows(dataflows, year):
 
 
 if __name__ == "__main__":
-    metadata_json = get_json("metadata.json")
-    dataflows = get_dataflows_from_json(metadata_json)
+    
+    dataflows = json_utils.get_dataflows_from_json("metadata.json")
 
     # # create dataframe from csv
     root_path = "."
