@@ -120,6 +120,3 @@ def process_dataflows(dataflows, year):
                     df.repartition(1).write.format("delta")\
                     .mode(output.config["save_mode"])\
                     .save(f"{output.config["table"]}")
-
-                    dfprev = spark.read.format("delta").load(f"{output.config["table"]}")
-                    dfprev.show()
