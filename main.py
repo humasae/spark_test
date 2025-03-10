@@ -1,6 +1,6 @@
 import sys
-import json_utils
-import spark_utils
+from utils import json_utils, spark_utils
+
 
 base_path = "files"
 
