@@ -1,5 +1,5 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, sum, count
+from pyspark.sql.functions import col, sum, count, regexp_replace, lit
 
 spark = SparkSession.builder.appName("test").getOrCreate()
 
@@ -11,32 +11,25 @@ csv_df = spark.read.format("csv")\
 .option("delimiter", ";")\
 .load(csv_path)
 
-csv_df = csv_df.withColumn("total_integer", col("total").cast("int"))
+csv_df = csv_df.withColumn("total_integer", regexp_replace(col("total"), r'\.', '').cast("int"))
+csv_df.createOrReplaceTempView("population")
 
-csv_df.show(n=10)
+grouped_df_both_sex = csv_df.filter(col("sexo")=="Ambos sexos").groupBy("municipio")\
+    .agg(sum("total_integer").alias("total_both_sex")).orderBy("municipio")
+grouped_df_men_women = csv_df.filter(col("sexo")!="Ambos sexos").groupBy("municipio")\
+    .agg(sum("total_integer").alias("total_men_women")).orderBy("municipio")
 
-grouped_df = csv_df.groupBy("sexo").agg(sum("total_integer"), count("total_integer"))
+joined_df = grouped_df_both_sex.join(grouped_df_men_women, on="municipio")
+diff_df = joined_df.withColumn("difference", col("total_both_sex") - col("total_men_women"))
 
-# show the results
-grouped_df.show()
+result_df = diff_df.select("municipio", "total_both_sex", "total_men_women", "difference").filter(col("difference")!=0)
+result_df.show()
 
 """
-2024
-+-----------+------------------+--------------------+
-|       sexo|sum(total_integer)|count(total_integer)|
-+-----------+------------------+--------------------+
-|Ambos sexos|            689296|                7756|
-|    Mujeres|            509675|                7756|
-|    Hombres|            494565|                7756|
-+-----------+------------------+--------------------+
-
-2025
-+-----------+------------------+--------------------+
-|       sexo|sum(total_integer)|count(total_integer)|
-+-----------+------------------+--------------------+
-|Ambos sexos|            689293|                7756|
-|    Mujeres|            509675|                7756|
-|    Hombres|            494565|                7756|
-+-----------+------------------+--------------------+
-
++--------------+--------------+---------------+----------+
+|     municipio|total_both_sex|total_men_women|difference|
++--------------+--------------+---------------+----------+
+|  42097 Gormaz|            12|             14|        -2|
+|02003 Albacete|          3827|           3825|         2|
++--------------+--------------+---------------+----------+
 """
