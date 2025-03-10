@@ -32,11 +32,12 @@ def add_fields_to_dataframe(df, fields):
     This function checks if there are any literal (searching for any single quote) in fields before adding any column,
     using lit or expr functions
     """
+    df_new_fields = df
     for field in fields:
         if "'" in field["expression"]:
-            df_new_fields = df.withColumn(field["name"], lit(field["expression"]))
+            df_new_fields = df_new_fields.withColumn(field["name"], lit(field["expression"]))
         else:
-            df_new_fields = df.withColumn(field["name"], expr(field["expression"]))
+            df_new_fields = df_new_fields.withColumn(field["name"], expr(field["expression"]))
     return df_new_fields
 
 # OUTPUT Functions
