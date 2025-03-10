@@ -17,14 +17,3 @@ if __name__ == "__main__":
 
     #apply transformations and export to json files and delta tables
     spark_utils.process_dataflows(dataflows, year)
-
-
-    
-
-    
-
-
-
-
-
-    

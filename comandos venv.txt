@@ -8,9 +8,7 @@ source ./bin/activate
 (https://docs.delta.io/latest/quick-start.html)
 (https://delta.io/blog/2023-02-14-delta-lake-merge/)
 
-pyspark --packages io.delta:delta-core_2.12:2.1.0 \
-  --conf "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension" \
-  --conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog"
+
 
 pip install delta-spark==3.3.0
 

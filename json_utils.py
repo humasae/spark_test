@@ -1,7 +1,5 @@
 import json
 
-
-
 class JsonItemClass:
     name: str
     type: str
